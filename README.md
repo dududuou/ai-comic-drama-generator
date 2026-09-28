@@ -21,7 +21,7 @@
 
 ## 核心技术链路
 
-```
+```text
 剧本输入
   ↓
 剧本解析（LLM）
@@ -78,7 +78,6 @@ ai-comic-drama-generator/
 │   ├── database.py
 │   ├── models.py
 │   ├── schemas.py
-│   ├── utils.py
 │   ├── routes/
 │   │   ├── script.py
 │   │   ├── generation.py
@@ -93,7 +92,7 @@ ai-comic-drama-generator/
 │       └── video_composer.py
 ├── data/
 ├── docs/
-│   ├── 01-project-overview.md
+│   ├─��� 01-project-overview.md
 │   ├── 02-open-source-stack.md
 │   ├── 03-implementation-roadmap.md
 │   ├── 04-cursor-usage.md
@@ -105,55 +104,108 @@ ai-comic-drama-generator/
 └── .gitignore
 ```
 
-## 时序目标
+## MVP 实施路线
 
-### Phase 1：MVP 原型（1-2 周）
+### Phase 1：剧本解析（1-3 天）
 - 剧本上传
-- 解析为 scenes
-- 生成 3-5 个镜头
-- 生成图片
-- 生成 TTS
-- 合成简单视频
+- 解析 scenes
+- 提取角色、地点、对话
 
-### Phase 2：可用版本（2-4 周）
-- 角色卡统一
-- 更稳定风格
-- 音乐与字幕
-- 任务队列
-- 进度状态
+### Phase 2：分镜生成（3-5 天）
+- 为每个 scene 生成 shot
+- 输出镜头描述和 prompt
 
-### Phase 3：产品级（4-8 周）
-- 可视化编辑器
-- 多集管理
-- 用户系统
-- 人工微调
+### Phase 3：图像生成（3-7 天）
+- 为每个 shot 生成图片
+- 保存到 `data/images/`
 
-## 使用方式（Cursor）
+### Phase 4：语音生成（2-4 天）
+- 为每段对白生成 TTS
+- 保存到 `data/audio/`
+
+### Phase 5：视频合成（2-4 天）
+- 合成 MP4
+- 输出到 `data/output/`
+
+### Phase 6：优化（1-2 周）
+- 角色一致性
+- 镜头风格统一
+- 自动字幕
+- BGM 和音效
+
+## 使用方式（Cursor / 本地）
 
 ```bash
 git clone https://github.com/dududuou/ai-comic-drama-generator.git
 cd ai-comic-drama-generator
+python -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
 python run.py
 ```
 
-## 学习建议
+访问：
 
-- 先读 `docs/01-project-overview.md`
-- 再读 `docs/02-open-source-stack.md`
-- 再读 `docs/03-implementation-roadmap.md`
-- 最后直接开始写代码
+```text
+http://localhost:8000/docs
+```
 
-## 适合 Cursor 的开发方式
+## 测试接口
 
-建议：
+### 1. 上传剧本
 
-1. 让 Cursor 先阅读 README 和 docs
-2. 让它基于骨架开始生成 `script_parser.py` 和 `shot_generator.py`
-3. 再逐步接入 `image_generator.py` / `tts_service.py` / `video_composer.py`
-4. 最后补前端或 API 调试
+```bash
+curl -X POST http://localhost:8000/api/scripts/upload \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "星河回响",
+    "content": "林岚站在城市天台，顾沉缓缓出现。雨夜的灯光映在两个人的脸上。林岚说：你到底来不来？顾沉说：我来了。"
+  }'
+```
 
-## 备注
+### 2. 生成分镜
 
-这个项目的目标不是“一个黑盒模型直接生成整个漫剧”，而是构建一条稳定的自动化链路。只要流程和依赖清晰，Cursor 很适合作为协作开发工具。
+```bash
+curl -X POST http://localhost:8000/api/generate/shots/1
+```
+
+### 3. 生成整部漫剧
+
+```bash
+curl -X POST http://localhost:8000/api/generate/comic/1
+```
+
+### 4. 查询任务状态
+
+```bash
+curl http://localhost:8000/api/tasks/1
+```
+
+## 关键原则
+
+- 先做能跑，不要一开始追求完美
+- 先跑通最小闭环：剧本 -> scenes -> shots -> video
+- 不要追求“一次生成整个长篇电影”
+- 先做 2~5 分钟短片 MVP，再扩展功能
+
+## 参考价值
+
+`shuohao-skills` 最重要的价值在于：
+
+- 角色设定拆解
+- 剧情结构化
+- 分镜与质量门思路
+
+但它不是一个“直接把剧本做成视频”的系统。所以本项目在设计上需要把：
+
+- LLM 结构化
+- 图像生成
+- 配音
+- 视频合成
+
+全部组合起来，才能构成真正的 AI 漫剧生成器。
+
+## 结论
+
+你现在的目标不是“一个模型直接输出整个漫剧”，而是构建一条可运行、可扩展的自动化链路。只要这条链路跑通，AI 漫剧生成器就已经成功落地。
